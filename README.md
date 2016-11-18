@@ -1,3 +1,3 @@
 # counting-murakami
 
-A final project for JPN 115
+A final project for JPN 115.
