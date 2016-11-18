@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <% include ../partials/header.ejs %>
+        <link rel="stylesheet" href="jqcloud.css">
+        <link rel="stylesheet" href="stylesheets/index.css">
+
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript" src="jqcloud.js"></script>
+        <script type="text/javascript" src="/clouds/windcloud.js"></script>
+        <script type="text/javascript" src="/clouds/pinballcloud.js"></script>
+        <script type="text/javascript" src="/clouds/sheepcloud.js"></script>
+        <script type="text/javascript" src="/clouds/wonderlandcloud.js"></script>
+        <script type="text/javascript" src="/clouds/norwegiancloud.js"></script>
+        <script type="text/javascript" src="/clouds/windupcloud.js"></script>
+
+        <script type="text/javascript" src="/counts/windcount.js"></script>
+        <script type="text/javascript" src="/counts/pinballcount.js"></script>
+        <script type="text/javascript" src="/counts/sheepcount.js"></script>
+        <script type="text/javascript" src="/counts/wonderlandcount.js"></script>
+        <script type="text/javascript" src="/counts/norwegiancount.js"></script>
+        <script type="text/javascript" src="/counts/windupcount.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+        <script type="text/javascript" src="js/mcharts.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $("#windcloud").jQCloud(windcloud);
+                $("#pinballcloud").jQCloud(pinballcloud);
+                $("#sheepcloud").jQCloud(sheepcloud);
+                $("#wonderlandcloud").jQCloud(wonderlandcloud);
+                $("#norwegiancloud").jQCloud(norwegiancloud);
+                $("#windupcloud").jQCloud(windupcloud);
+
+                // Get context with jQuery - using jQuery's .get() method.
+                var ctx = $("#mchart").get(0).getContext("2d");
+                // This will get the first returned node in the jQuery collection.
+                var myNewChart = new Chart(ctx).Line(createData(windcount.length, pinballcount.length, sheepcount.length, wonderlandcount.length, norwegiancount.length, windupcount.length), {
+                    scaleShowGridLines: false
+                });
+
+            });
+        </script>
+</head>
+
+<body>
+    <!--   <% include ../partials/nav.ejs %> -->
+    <div class="jumbotron text-center">
+        <div class="container">
+            <h1>Counting Murakami</h1>
+            <p>John Spiva's final project for
+                <span style="font-style:oblique;">JPN 115: Haruki Murakami</span>
+            </p>
+        </div>
+    </div>
+    <div class="container">
+        <p>
+            <br/>
+        </p>
+        <p class="essay">Information theory plays a huge role in Haruki Murakami’s books. Japanese philosopher and literary critic Kōjin Karatani explains in “The Landscape of Haruki Murakami: Pinball in the Year 1973,” the fifth chapter in his book History and Repetition,
+            that Murakami is able to use information theory in order to create what Kōjin calls an “intentional misapprehension” in his works. This misapprehension is, as I understand it, the belief that information and data exist objectively, and are
+            created by some transcendental entity instead of from within one person’s subjective consciousness. Murakami’s protagonists, holding onto this belief, are constantly trying to use numbers and measurements to understand the world and what is
+            happening around them. Often, though, they fail to gain much from this and end up, along with the reader, questioning the relationship between information and meaning. </p>
+        <p class="essay">
+            For my final project, I created this website in the hope that I might better understand what Murakami is communicating with this “intentional misapprehension” that so often shows up in his books. Attempting to gain a deeper understanding of Murakami and
+            the books we have read using the same approach that many of his protagonists unsuccessfully adopt in order to better understand things in their lives felt somewhat odd. However, I think I was able to gain some insight into our books from both
+            the successes and failures of my attempt at analyzing the data I collected.
+        </p>
+        <p class="essay">
+            I began my project by writing code that took the ebook versions of each Murakami book we read this semester and converting them into basic text documents. Then, I wrote code with the Ruby programming language to create essentially a big list of every
+            word and the number of times it is used for each book. This was surprisingly difficult and ended up taking much more of my time than I had hoped. I have very little experience using regular expressions to match patterns and words in books,
+            and struggled to use them for things like finding dates or proper nouns in each book. Below is the actual code I used to do this, along with comments to explain what the important lines do.
+        </p>
+        <br/>
+    </div>
+    <div class="container">
+        <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #666666; font-style: italic"># The books we have read this semester</span>
+books <span style="color: #333333">=</span> <span style="color: #007722">Array</span><span style="color: #333333">[</span><span style="background-color: #e0e0ff">&#39;norwegian&#39;</span>, <span style="background-color: #e0e0ff">&#39;pinball&#39;</span>, <span style="background-color: #e0e0ff">&#39;sheep&#39;</span>, <span style="background-color: #e0e0ff">&#39;wind&#39;</span>, <span style="background-color: #e0e0ff">&#39;windup&#39;</span>, <span style="background-color: #e0e0ff">&#39;wonderland&#39;</span><span style="color: #333333">]</span>
+
+<span style="color: #666666; font-style: italic"># The array in which words and their associated frequencies are stored</span>
+frequency <span style="color: #333333">=</span> <span style="color: #007722">Array</span><span style="color: #333333">.</span>new(books<span style="color: #333333">.</span>size)
+
+<span style="color: #666666; font-style: italic"># The array of books (in .txt format) that will be analyzed</span>
+input_file <span style="color: #333333">=</span> <span style="color: #007722">Array</span><span style="color: #333333">.</span>new(books<span style="color: #333333">.</span>size)
+
+<span style="color: #666666; font-style: italic"># The files that I output the data in </span>
+<span style="color: #666666; font-style: italic"># (the output is formatted as a javascript array so that I may use it in my web application)</span>
+output_file <span style="color: #333333">=</span> <span style="color: #007722">Array</span><span style="color: #333333">.</span>new(books<span style="color: #333333">.</span>size)
+
+<span style="color: #666666; font-style: italic"># For each book I do the following</span>
+books<span style="color: #333333">.</span>each_with_index <span style="color: #228899; font-weight: bold">do</span> <span style="color: #333333">|</span>book, i<span style="color: #333333">|</span>
+    frequency<span style="color: #333333">[</span>i<span style="color: #333333">]</span> <span style="color: #333333">=</span> <span style="color: #55eedd; font-weight: bold">Hash</span><span style="color: #333333">.</span>new(<span style="color: #6666ff; font-weight: bold">0</span>)
+    input_file<span style="color: #333333">[</span>i<span style="color: #333333">]</span> <span style="color: #333333">=</span> <span style="color: #55eedd; font-weight: bold">File</span><span style="color: #333333">.</span>open(<span style="background-color: #e0e0ff">&#39;../txts/&#39;</span> <span style="color: #333333">+</span> book <span style="color: #333333">+</span> <span style="background-color: #e0e0ff">&#39;.txt&#39;</span>, <span style="background-color: #e0e0ff">&#39;r&#39;</span>)
+    output_file<span style="color: #333333">[</span>i<span style="color: #333333">]</span> <span style="color: #333333">=</span> <span style="color: #55eedd; font-weight: bold">File</span><span style="color: #333333">.</span>open(<span style="background-color: #e0e0ff">&#39;../counting-murakami/public/counts/&#39;</span> <span style="color: #333333">+</span> book <span style="color: #333333">+</span> <span style="background-color: #e0e0ff">&#39;count.js&#39;</span>, <span style="background-color: #e0e0ff">&#39;w&#39;</span>)
+    output_file<span style="color: #333333">[</span>i<span style="color: #333333">].</span>truncate(<span style="color: #6666ff; font-weight: bold">0</span>);
+    output_file<span style="color: #333333">[</span>i<span style="color: #333333">].</span>print(<span style="background-color: #e0e0ff">&quot;var &quot;</span> <span style="color: #333333">+</span> book <span style="color: #333333">+</span> <span style="background-color: #e0e0ff">&quot;count = [</span><span style="color: #666666; font-weight: bold; background-color: #e0e0ff">\n</span><span style="background-color: #e0e0ff">&quot;</span>)
+
+    <span style="color: #666666; font-style: italic"># Scan the text for the regular expression (\w+([-&#39;.]\w+)*) and add 1 to its frequency if it is longer than 2 characters</span>
+    input_file<span style="color: #333333">[</span>i<span style="color: #333333">].</span>read<span style="color: #333333">.</span>downcase<span style="color: #333333">.</span>scan(<span style="color: #000000; background-color: #e0e0ff">/(\w+([-&#39;.]\w+)*)/</span>) {<span style="color: #333333">|</span>word, stuff<span style="color: #333333">|</span> <span style="color: #228899; font-weight: bold">if</span> (word<span style="color: #333333">.</span>length <span style="color: #333333">&gt;</span> <span style="color: #6666ff; font-weight: bold">2</span>) <span style="color: #228899; font-weight: bold">then</span> frequency<span style="color: #333333">[</span>i<span style="color: #333333">][</span>word<span style="color: #333333">]</span> <span style="color: #333333">+=</span> <span style="color: #6666ff; font-weight: bold">1</span> <span style="color: #228899; font-weight: bold">end</span>}
+
+    <span style="color: #666666; font-style: italic"># Sort the output so that words that appear the most often are first</span>
+    frequency<span style="color: #333333">[</span>i<span style="color: #333333">].</span>sort_by{<span style="color: #333333">|</span>key, value<span style="color: #333333">|</span> value}<span style="color: #333333">.</span>reverse<span style="color: #333333">.</span>each{<span style="color: #333333">|</span>elem<span style="color: #333333">|</span> output_file<span style="color: #333333">[</span>i<span style="color: #333333">].</span>print <span style="background-color: #e0e0ff">&quot;\{text: </span><span style="color: #666666; font-weight: bold; background-color: #e0e0ff">\&quot;</span><span style="background-color: #eeeeee">#{</span>elem<span style="color: #333333">[</span><span style="color: #6666ff; font-weight: bold">0</span><span style="color: #333333">]</span><span style="background-color: #eeeeee">}</span><span style="color: #666666; font-weight: bold; background-color: #e0e0ff">\&quot;</span><span style="background-color: #e0e0ff">, weight: </span><span style="background-color: #eeeeee">#{</span>elem<span style="color: #333333">[</span><span style="color: #6666ff; font-weight: bold">1</span><span style="color: #333333">]</span><span style="background-color: #eeeeee">}</span><span style="background-color: #e0e0ff">\},</span><span style="color: #666666; font-weight: bold; background-color: #e0e0ff">\n</span><span style="background-color: #e0e0ff">&quot;</span>}
+    output_file<span style="color: #333333">[</span>i<span style="color: #333333">].</span>print(<span style="background-color: #e0e0ff">&quot;];&quot;</span>)
+<span style="color: #228899; font-weight: bold">end</span>
+<span style="color: #007722">exit</span>
+</pre></div>
+
+
+    </div>
+    <div class="container">
+        <p>
+            <br/>
+            <br/>
+        </p>
+        <p class="essay">The most basic visualization I created from this data was a line graph displaying the word count of each novel. Although its hard to learn much from this since its just a few data points, I think it shows nicely how Murakami seems to build off
+            his previous works with each new novel he writes. The books all share so much with each other that every new one demonstrates how expansive Murakami’s world is. The other interesting thing that the graph shows is what an exception Norwegian
+            Wood is. The dip in the graph accurately reflects what a challenge writing it must have been for Murakami.
+        </p>
+        <p>
+            <br/>
+            <br/>
+        </p>
+
+    </div>
+    <div class="row">
+        <div class="container">
+            <h4>
+                Word counts in our Murakami books
+            </h4>
+        </div>
+        <div class="container">
+            <canvas id="mchart" width="700" height="500"></canvas>
+        </div>
+    </div>
+    <div class="container">
+        <p class="essay">After this, I made a bar chart displaying the number of times words related to four things—water, sleep, music, death, cooking, and sex—appear in each book we read. Despite probably being common to most novels, these things show up so often in
+            Murakami’s work that I still found it interesting to visualize. I also hoped that by seeing how often one thing appeared compared to another might reveal in some way what each book was about. For example, sleep and death are the most often
+            occurring categories for Norwegian Wood, while death and water are for The Wind-Up Bird Chronicle. This is a rudimentary way to compare them, but it provides some insight into how Murakami decided to construct each story using the motifs that
+            constantly appear in his work.
+
+        </p>
+        <p>
+            <br/>
+        </p>
+
+    </div>
+    <link rel="stylesheet" href="/stylesheets/chartist.css">
+    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            new Chartist.Bar('.ct-chart', {
+                labels: ['Hear the Wind Sing', 'Pinball, 1973', 'A Wild Sheep Chase', 'Hard-Boiled Wonderland and the End of the World', 'Norwegian Wood', 'The Wind-Up Bird Chronicle'],
+                series: [
+                    [40, 47, 51, 129, 42, 227],
+                    [18, 35, 55, 89, 151, 211],
+                    [8, 9, 13, 46, 51, 48],
+                    [25, 15, 57, 91, 105, 340],
+                    [3, 4, 10, 18, 29, 27],
+                    [5, 2, 31, 25, 35, 51]
+                ]
+            }, {
+                // Default mobile configuration
+                stackBars: true,
+                axisX: {
+                    labelInterpolationFnc: function(value) {
+                        return value.split(/\s+/).map(function(word) {
+                            return word[0];
+                        }).join('');
+                    }
+                },
+                axisY: {
+                    offset: 20,
+                    showGrid: false
+
+                },
+                axisX: {
+                    showGrid: false,
+                    showLabel: false
+
+                }
+            }, [
+                // Options override for media > 400px
+                ['screen and (min-width: 400px)', {
+                    reverseData: true,
+                    horizontalBars: true,
+                    axisX: {
+                        labelInterpolationFnc: Chartist.noop
+                    },
+                    axisY: {
+                        offset: 100
+                    }
+                }],
+                // Options override for media > 800px
+                ['screen and (min-width: 800px)', {
+                    stackBars: false,
+                    seriesBarDistance: 10,
+                    horizontalBars: true
+                }],
+                // Options override for media > 1000px
+                ['screen and (min-width: 1000px)', {
+                    reverseData: true,
+                    horizontalBars: true,
+                    seriesBarDistance: 15
+                }]
+            ]);
+        });
+    </script>
+    <div class="row">
+        <div class="container">
+            <h4>
+                Appearances of
+            </h4>
+            <ul class="legend-list">
+                <li>
+
+                    <span style="background-color:#59922b;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Water
+                </li>
+                <li>
+
+                    <span style="background-color:#453d3f;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Sleep
+                </li>
+                <li>
+
+                    <span style="background-color:#d17905;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Music
+                </li>
+                <li>
+
+                    <span style="background-color:#f4c63d;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Death
+                </li>
+                <li>
+
+                    <span style="background-color:#f05b4f;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Cooking
+                </li>
+                <li>
+
+                    <span style="background-color:#d70206;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    Sex
+                </li>
+            </ul>
+            <h4>
+                in our Murakami books
+            </h4>
+        </div>
+        <div class="container">
+            <div class="ct-chart ct-perfect-fourth"></div>
+        </div>
+    </div>
+    <div class="container">
+        <p class="essay">The third visualization is a set of word clouds that show the words that appear most often in each book. For this visualization, I filtered out a set of words that were uninteresting for the display, such as prepositions and articles, before creating
+            the clouds. Murakami constantly uses repetition to remove meaning from words and ideas. This visualization allows us to see both some of the content each book was centered around—Naoko, rat, sheep, shadow, ears—and also some of the times Murakami
+            might be using repetition to remove meaning from something—time, years, life, now, here. Emptying time and the self of their meaning is a common occurrence in his books, so it’s not surprising that he uses words related to them so often.
+
+        </p>
+        <p>
+            <br/>
+        </p>
+
+    </div>
+    <div class="container proj-section">
+        <h2>Most frequently appearing words in our Murakami books</h2>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="cloud-title">Hear the Wind Sing</h4>
+                <div id="windcloud" class="wordcloud left"></div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 class="cloud-title">Pinball, 1973</h4>
+                <div id="pinballcloud" class="wordcloud right"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="cloud-title">A Wild Sheep Chase</h4>
+                <div id="sheepcloud" class="wordcloud left"></div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 class="cloud-title">Hard-Boiled Wonderland And The End of The World</h4>
+                <div id="wonderlandcloud" class="wordcloud right"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="cloud-title">Norwegian Wood</h4>
+                <div id="norwegiancloud" class="wordcloud left"></div>
+            </div>
+            <div class="col-md-6">
+                <h4 class="cloud-title">The Wind-Up Bird Chronicle</h4>
+                <div id="windupcloud" class="wordcloud right"></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <p class="essay">Finally, I created a timeline that displays the years mentioned in each book and how often each one was mentioned. This visualization, although potentially the least aesthetically appealing, gives us an intriguing view of the use of dates
+                and time in Murakami’s books. The timeline immediately shows what an impressive range of years are discussed in the stories. Additionally, the sheer number of years mentioned is huge. Murakami accomplishes similar goals with his constant
+                references to years and dates as he does with his repetition of certain words. Karatani describes the overload of dates in the books as “an attempt to evacuate historical consciousness.” There are simply so many references, most of which
+                are treated completely equally regardless of historical significance, covering such a large range of history that the meaning of any particular one starts to disappear to the reader.
+
+            </p>
+            <p>
+                <br/>
+                <br/>
+            </p>
+
+        </div>
+        <div class="container">
+            <div class="row">
+                <h4>
+                    Years mentioned in our Murakami books
+                </h4>
+                <!-- 1 -->
+                <link rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
+                <link title="mytimeline-styles" rel="stylesheet" href="/stylesheets/timeline.css">
+
+                <!-- 2 -->
+                <script src="//cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
+
+                <div id='timeline-embed' style="width: 100%; height: 300px"></div>
+
+                <!-- 3 -->
+                <script type="text/javascript">
+                    var additionalOptions = {
+                        initial_zoom: 6,
+                        timenav_position: "top",
+                        start_at_slide: 2,
+                        timenav_height: 150
+                    }
+
+                    timeline = new TL.Timeline('timeline-embed',
+                        'https://docs.google.com/spreadsheets/d/15ET00bMopA2L5HeTIYpMlCqUrh2L5nR1iTq9jZRfaIs/pubhtml',
+                        additionalOptions);
+                </script>
+            </div>
+        </div>
+        <div class="container">
+            <p>
+                <br/>
+            </p>
+            <p class="essay">
+                I think the narrator of Hear the Wind Sing described a feeling quite similar to my own after all my attempts at data analysis when he said “I believed in all seriousness that by converting my life into numbers I might be able to get through to people.”
+                Although I didn’t expect any huge realizations or developments in my understanding of Murakami to come out of my analysis and visualizations, I did get my hopes up about what I might be able to communicate with them. However, I ended up
+                mostly feeling like I’d just been counting steps or cigarettes.
+            </p>
+        </div>
+    </div>
+
+    <div class="container">
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>The code I used to create this website and these visualizations can be found <a href="https://github.com/johnspiva/counting-murakami.git">here</a></h3>
+
+            </div>
+            <div class="col-md-6">
+                <h3>
+                    <p>
+                        <br/>
+                        <br/>
+                    </p>
+                    <p>
+                        <br/>
+                        <br/>
+                    </p>
+                    <p>
+                        <br/>
+                        <br/>
+                    </p>
+                    <p>
+                        <br/>
+                        <br/>
+                    </p>
+                </h3>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

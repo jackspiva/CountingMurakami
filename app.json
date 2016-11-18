@@ -1,0 +1,6 @@
+{
+  "name": "counting-murakami",
+  "description": "Final project for JPN 115",
+  "repository": "https://github.com/johnspiva/counting-murakami",
+  "keywords": ["node", "express", "static"]
+}

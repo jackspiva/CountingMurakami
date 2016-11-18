@@ -1,0 +1,25 @@
+.wordcloud {
+    width: 50%;
+    width: 450px;
+    height: 350px;
+    position: relative;
+    /*margin-top: 50px;*/
+    /*margin-bottom: 50px;*/
+}
+h4 .cloud-title {
+    text-align: center;
+}
+.row {
+    padding-bottom: 60px;
+}
+.proj-section {
+    padding-bottom: 60px;
+    font-weight: bold;
+}
+.legend-list {
+    list-style-type: none;
+}
+.essay {
+    text-indent: 40px;
+    font-size: 16px;
+}
